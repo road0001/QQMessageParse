@@ -1,0 +1,82 @@
+body{
+	margin-left:192px !important;
+}
+
+button{
+	user-select: none;
+	transition:all 0.125s;
+}
+
+img{
+	max-height:256px;
+	max-width:256px;
+}
+
+.dateSelector{
+	position:fixed;
+	top:0px;
+	left:0px;
+	bottom:0px;
+	width:192px;
+	overflow-y:auto;
+	border-right:1px solid #000;
+	z-index:10;
+}
+
+.dateBu{
+	width:100%;
+	height:32px;
+	border:none;
+	outline:none;
+	color:#000;
+	background:#FFF;
+	font-family: '微软雅黑';
+}
+.dateBu:hover{
+	color:#FFF;
+	background-color:#007FFF;
+}
+
+.dateBu.selected{
+	color:#FFF;
+	background-color:#007FFF;
+}
+
+.showImgBG{
+	position:fixed;
+	top:0px;
+	left:0px;
+	right:0px;
+	bottom:0px;
+	background:rgba(0,0,0,0.75);
+	overflow:auto;
+	z-index:100;
+}
+
+.showImgForm{
+	display: flex;
+	justify-content: center;
+	/* align-items: top; */
+	/* margin:0 auto; */
+	height:100%;
+}
+
+.showImgTable{
+	width:100%;
+	height:100%;
+	text-align: center;
+	vertical-align: middle;
+	border-collapse: collapse;
+	border:none;
+}
+.showImgTable tr, .showImgTable td{
+	border:none;
+}
+
+.showImg{
+	/* display: flex;
+	justify-content: center; */
+	max-width: none;
+	max-height: none;
+	/* align-items: center; */
+}

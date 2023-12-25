@@ -1,0 +1,23 @@
+{
+	"name": "QQ Message",
+	"main": "index.html",
+	"window": {
+		"title": "QQ Message",
+		"toolbar": false,
+		"frame": true,
+		"transparent": false,
+		"fullscreen": false,
+		"width": 1440,
+		"height": 900,
+		"min_width": 1440,
+		"min_height": 900,
+		"position":"center"
+	},
+	"webkit": {
+		"plugin": true
+	},
+	"dependencies": {
+		"encoding": "^0.1.13",
+		"iconv-lite": "^0.6.2"
+	}
+}

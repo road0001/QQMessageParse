@@ -1,0 +1,6 @@
+*.7z
+*.zip
+QQMessageParse
+*.spec
+python/build
+python/dist
