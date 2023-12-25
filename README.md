@@ -20,7 +20,7 @@
   - 双击python/install.bat安装依赖。
   - 双击python/build.bat进行打包。
 - NW.JS部分
-  - 从https://nwjs.io/下载NW.JS最新版本并解压。
+  - 从https://nwjs.io/ 下载NW.JS最新版本并解压。
   - 将js目录下所有文件放入NW.JS根目录。
 
 
