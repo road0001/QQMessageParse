@@ -1,5 +1,6 @@
 body{
 	margin-left:192px !important;
+	padding-top:32px;
 }
 
 button{
@@ -8,8 +9,9 @@ button{
 }
 
 img{
-	max-height:256px;
+	max-height:512px;
 	max-width:256px;
+	cursor:pointer;
 }
 
 .dateSelector{
@@ -19,7 +21,7 @@ img{
 	bottom:0px;
 	width:192px;
 	overflow-y:auto;
-	border-right:1px solid #000;
+	border-right:1px solid #8EC3EB;
 	z-index:10;
 }
 
@@ -79,4 +81,62 @@ img{
 	max-width: none;
 	max-height: none;
 	/* align-items: center; */
+}
+
+.searchBar{
+	position:fixed;
+	top:0px;
+	left:193px;
+	right:0px;
+	height:32px;
+	border-bottom:1px solid #8EC3EB;
+	z-index:10;
+	background:rgba(255,255,255,0.25);
+	backdrop-filter: blur(10px);
+	user-select: none;
+}
+.searchInput{
+	width:calc(100% - (32px * 4) - 15px);
+	height:100%;
+	padding:0px;
+	padding-left: 8px;
+    padding-right: 8px;
+	border:none;
+	outline:none;
+	background:transparent;
+	font-family: '微软雅黑';
+}
+.searchBu{
+	padding: 0px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    outline: none;
+    font-family: '新宋体';
+    line-height: 0px;
+    font-size: 20px;
+    background: transparent;
+}
+.searchBu:hover{
+	background:#8EC3EB;
+}
+.searchBu:active{
+	background:#007FFF;
+	color:#FFF;
+}
+.searchBu.clear{
+	color:#F00;
+}
+.searchBu.submit{
+	font-weight:bold;
+}
+
+.highlight{
+	transition:all 0.25s;
+	outline:1px solid transparent;
+	background-color: #FFFF00;
+}
+.highlight2{
+	background-color: #FFFF00;
+	outline:1px solid #FF7F00;
 }

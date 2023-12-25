@@ -8,6 +8,12 @@ body{
 	padding-left:8px;
 	margin-bottom:40px;
 	font-size:36px;
+	user-select: none;
+}
+
+.messageNotice{
+	padding-left:8px;
+	user-select: none;
 }
 
 .messageSelector{
@@ -16,7 +22,7 @@ body{
 	left:0px;
 	right:0px;
 	bottom:0px;
-	background:rgba(255,255,255,0);
+	background:rgba(255,255,255,0.25);
 	backdrop-filter: blur(20px);
 	z-index:1000;
 	padding-left:32px;
@@ -57,6 +63,7 @@ body{
 	left:0px;
 	width:32px;
 	height:32px;
+	opacity:0;
 	font-family: '新宋体';
 	font-size:20px;
 	font-weight:bold;

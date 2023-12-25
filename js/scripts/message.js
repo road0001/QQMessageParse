@@ -27,18 +27,18 @@ async function loadConfig(name){
 	});
 }
 
-let dateDataArr=[];
-async function loadDate(name){
-	return new Promise((resolve, reject)=>{
-		fs.readFile(name, `utf-8`, (err, data)=>{
-			if (err) {
-				reject(err);
-			}
-			dateDataArr=JSON.parse(data);
-			resolve(dateDataArr);
-		});
-	});
-}
+// let dateDataArr=[];
+// async function loadDate(name){
+// 	return new Promise((resolve, reject)=>{
+// 		fs.readFile(name, `utf-8`, (err, data)=>{
+// 			if (err) {
+// 				reject(err);
+// 			}
+// 			dateDataArr=JSON.parse(data);
+// 			resolve(dateDataArr);
+// 		});
+// 	});
+// }
 
 class ReadImg{
 	constructor(name){
@@ -99,18 +99,79 @@ function showImg(bool, src, dataSrc){
 	}
 }
 
+function applySearch(text, type){
+	$(`body`).unhighlight();
+	if(text){
+		$(`body`).highlight(text);
+	}
+	let textHightEl=$(`.highlight`);
+	switch(type){
+		case `prev`:
+			textHightEl.removeClass(`highlight2`);
+			for(let i=textHightEl.length-1; i>=0; i--){
+				if(textHightEl.eq(i)[0].getBoundingClientRect().y < 32 || i==0){
+					textHightEl.eq(i)[0].scrollIntoView({behavior:`smooth`,block:`center`,inline:`center`});
+					textHightEl.eq(i).addClass(`highlight2`);
+					break;
+				}
+			}
+		break;
+		case `next`:
+			textHightEl.removeClass(`highlight2`);
+			for(let i=0; i<textHightEl.length; i++){
+				if(textHightEl.eq(i)[0].getBoundingClientRect().y > window.innerHeight || i==textHightEl.length-1){
+					textHightEl.eq(i)[0].scrollIntoView({behavior:`smooth`,block:`center`,inline:`center`});
+					textHightEl.eq(i).addClass(`highlight2`);
+					break;
+				}
+			}
+		break;
+	}
+}
+
+function insertSearch(){
+	$(`body`).append(`<div class="searchBar">
+		<input id="searchInput" class="searchInput" placeholder="搜索"/>
+		<button id="searchClear" class="searchBu clear" title="清空">×</button>
+		<button id="searchPrev" class="searchBu prev" title="上一个">↑</button>
+		<button id="searchNext" class="searchBu next" title="下一个">↓</button>
+		<button id="searchSubmit" class="searchBu submit" title="搜索">></button>
+	</div>`);
+	$(`#searchClear`).bind(`click`,function(){
+		$(`#searchInput`).val(``);
+		applySearch($(`#searchInput`).val(),`clear`);
+	});
+	$(`#searchPrev`).bind(`click`,function(){
+		applySearch($(`#searchInput`).val(),`prev`);
+	});
+	$(`#searchNext`).bind(`click`,function(){
+		applySearch($(`#searchInput`).val(),`next`);
+	});
+	$(`#searchSubmit`).bind(`click`,function(){
+		applySearch($(`#searchInput`).val());
+	});
+	$(window).bind(`keydown`,function(e){
+		let keyCode = e.which || e.keyCode;
+		if (keyCode === 13) { // Enter键
+			applySearch($(`#searchInput`).val());
+		}
+	});
+}
+
 async function main(){
 	let pathSplit=window.location.pathname.split(`/`);
 	pathSplit.shift();
 	pathSplit.pop();
 	messagePath=decodeURIComponent(pathSplit.join(`/`));
 
-	await Promise.all([
-		loadConfig(`${messagePath}/imgdata.json`),
-		loadDate(`${messagePath}/date.json`),
-	])
+	await loadConfig(`${messagePath}/imgdata.json`);
 
 	//日期选择列表
+	let dateElement=$(`.dateTag`);
+	let dateDataArr=[];
+	for(let i=0; i<dateElement.length; i++){
+		dateDataArr.push(dateElement.eq(i).attr(`date`));
+	}
 	$(`body`).append(`<div id="dateSelector" class="dateSelector"></div>`);
 	for(let i=0; i<dateDataArr.length; i++){
 		let curDate=dateDataArr[i];
@@ -123,7 +184,8 @@ async function main(){
 				$(`#dateBu_${curDate}`).addClass(`selected`);
 			}
 			$(`#dateBu_${curDate}`).bind(`click`,{curDate:curDate},function(e){
-				window.location.href=`#dateStr_${e.data.curDate}`;
+				// window.location.href=`#dateStr_${e.data.curDate}`;
+				$(`#dateStr_${e.data.curDate}`)[0].scrollIntoView({behavior:`smooth`,block:`center`,inline:`center`});
 				setTimeout(()=>{
 					$(`.dateBu`).removeClass(`selected`);
 					$(this).addClass(`selected`);
@@ -149,34 +211,37 @@ async function main(){
 		dateObserver.observe(item);
 	});
 
-	//图片选择列表
-	let imgObserver = new IntersectionObserver(
-		(changes) => {
-			changes.forEach(async (change) => {
-				if (change.intersectionRatio > 0) {
-					let img = change.target;
-					let imgData=new ReadImg(img.dataset.src);
-					img.src = await imgData.read();
-					imgObserver.unobserve(img);
+	insertSearch();
 
-					// img.addEventListener(`contextmenu`,(e)=>{
-					// 	e.preventDefault();
-					// 	let imageData=imgData.getData();
-					// 	console.log(imageData);
-					// 	let imageName=imageData.name.replaceAll(`.dat`,``);
-					// 	let imageType=imageData.type.split(`/`)[1];
-					// 	let image = document.createElement('a');
-					// 	image.href = img.src;
-					// 	image.download = `${imageName}.${imageType}`;
-					// 	image.click();
-					// })
-				}
-			})
-		}
-	)
-	getTag('img').forEach((item) => {
-		imgObserver.observe(item);
-	});
+	//图片列表（懒加载）
+	// let imgObserver = new IntersectionObserver(
+	// 	(changes) => {
+	// 		changes.forEach(async (change) => {
+	// 			if (change.intersectionRatio > 0) {
+	// 				let img = change.target;
+	// 				let imgData=new ReadImg(img.dataset.src);
+	// 				img.src = await imgData.read();
+	// 				imgObserver.unobserve(img);
+
+	// 				// img.addEventListener(`contextmenu`,(e)=>{
+	// 				// 	e.preventDefault();
+	// 				// 	let imageData=imgData.getData();
+	// 				// 	console.log(imageData);
+	// 				// 	let imageName=imageData.name.replaceAll(`.dat`,``);
+	// 				// 	let imageType=imageData.type.split(`/`)[1];
+	// 				// 	let image = document.createElement('a');
+	// 				// 	image.href = img.src;
+	// 				// 	image.download = `${imageName}.${imageType}`;
+	// 				// 	image.click();
+	// 				// })
+	// 			}
+	// 		})
+	// 	}
+	// )
+	// getTag('img').forEach((item) => {
+	// 	imgObserver.observe(item);
+	// });
+
 	$(`img`).bind(`click`,function(){
 		showImg(true,$(this).attr(`src`),$(this).attr(`data-src`));
 	});
@@ -191,6 +256,15 @@ async function main(){
 		image.download = `${imageName}.${imageType}`;
 		image.click();
 	});
+
+	//图片列表（非懒加载）
+	let imgEl=$(`img`);
+	for(let i=0; i<imgEl.length; i++){
+		let curImgEl=imgEl.eq(i);
+		let imgData=new ReadImg(curImgEl.attr(`data-src`));
+		let imgSrc=await imgData.read();
+		curImgEl.attr(`src`,imgSrc);
+	}
 }
 
 

@@ -48,10 +48,10 @@ htmlScript='<script src="/scripts/jquery-3.0.0.min.js"></script><script src="/sc
 htmlHead='<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>QQ Message</title><style type="text/css">body{font-size:12px; line-height:22px; margin:2px;}td{font-size:12px; line-height:22px;}</style></head><body><table width="100%" cellspacing="0">'
 htmlTail='</table></body></html>'
 alreadyWriteScript=False
-htmlDateList=[]
+# htmlDateList=[]
 def writeHtml(html):
 	global htmlScript
-	global htmlDateList
+	# global htmlDateList
 	global htmlMonth
 	global htmlMonthLast
 	global htmlHead
@@ -71,7 +71,7 @@ def writeHtml(html):
 		htmlMonth=f'{htmlDate[0]}-{htmlDate[1]}'
 		htmlDateStr=f'{htmlDate[0]}-{htmlDate[1]}-{htmlDate[2]}'
 		htmlStr=htmlStr.replace(htmlDateStr,f'<span id="dateStr_{htmlDateStr}" class="dateTag" date="{htmlDateStr}">{htmlDateStr}</span>')
-		htmlDateList.append(htmlDateStr)
+		# htmlDateList.append(htmlDateStr)
 		if htmlMonth != htmlMonthLast:
 			htmlMonthLast=htmlMonth
 			alreadyWriteScript=False
@@ -133,13 +133,13 @@ def writeData(data, commit=True):
 			f.flush()
 			f.close()
 
-def outputDateList():
-	global htmlDateList
-	a=json.dumps(htmlDateList)
-	with open(f'{outputPath}/date.json','w',encoding='utf-8') as f:
-		f.write(a)
-		f.flush()
-		f.close()
+# def outputDateList():
+# 	global htmlDateList
+# 	a=json.dumps(htmlDateList)
+# 	with open(f'{outputPath}/date.json','w',encoding='utf-8') as f:
+# 		f.write(a)
+# 		f.flush()
+# 		f.close()
 
 def outputOffset():
 	global offsetData
@@ -186,7 +186,7 @@ def main(name):
 				if not data:
 					if isOutputData:
 						outputOffset()
-					outputDateList()
+					# outputDateList()
 					print('END.')
 					break
 				parse=parseLine(data)

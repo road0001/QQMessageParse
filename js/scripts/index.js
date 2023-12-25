@@ -1,5 +1,29 @@
-let title=`Message Viewer`;
+let title=`QQ消息查看器`;
+let notice={
+	empty:`消息列表为空！`,
+}
 let messageFolder=`messages`;
+
+async function showHome(bool){
+	if(bool==undefined || bool==true){
+		$(`title`).html(title);
+		$(`.backBu`).css(`opacity`,0);
+		$(`.messageSelector`).css(`display`,``);
+		if(bool!=undefined){
+			$(`.messageSelector`).css(`opacity`,0);
+			$(`.messageSelector`).animate({
+				opacity:1,
+			},250);
+		}
+	}else{
+		$(`.backBu`).css(`opacity`,1);
+		$(`.messageSelector`).animate({
+			opacity:0,
+		},250,()=>{
+			$(`.messageSelector`).css(`display`,`none`);
+		});
+	}
+}
 
 async function showMessage(name){
 	$(`#dateSelector`).html(``);
@@ -25,11 +49,7 @@ async function showMessage(name){
 			});
 		}
 	}
-	$(`.messageSelector`).animate({
-		opacity:0,
-	},250,()=>{
-		$(`.messageSelector`).css(`display`,`none`);
-	});
+	showHome(false);
 }
 
 async function main(){
@@ -37,22 +57,22 @@ async function main(){
 	$(`.messageTitle`).html(title);
 	let htmlFolders=getAllFolders(`./${messageFolder}/`);
 	htmlFolders.sort();
-	for(let i=0; i<htmlFolders.length; i++){
-		let curFolder=htmlFolders[i].replaceAll(`${messageFolder}/`,``);
-		$(`#messageSelector`).append(`<button id="folder_${i}" class="messageBu">${curFolder}</button>`);
-		$(`#folder_${i}`).bind(`click`,{folder:curFolder},function(e){
-			showMessage(e.data.folder);
-		})
+	if(htmlFolders.length==0){
+		$(`#messageSelector`).append(`<h2 class="messageNotice">${notice.empty}</h2>`);
+	}else{
+		for(let i=0; i<htmlFolders.length; i++){
+			let curFolder=htmlFolders[i].replaceAll(`${messageFolder}/`,``);
+			$(`#messageSelector`).append(`<button id="folder_${i}" class="messageBu">${curFolder}</button>`);
+			$(`#folder_${i}`).bind(`click`,{folder:curFolder},function(e){
+				showMessage(e.data.folder);
+			})
+		}
 	}
 
 	$(`#backBu`).bind(`click`,function(){
-		$(`title`).html(title);
-		$(`.messageSelector`).css(`opacity`,0);
-		$(`.messageSelector`).css(`display`,``);
-		$(`.messageSelector`).animate({
-			opacity:1,
-		},250);
-	})
+		showHome(true);
+	});
+	showHome();
 }
 
 window.onload=function(){
