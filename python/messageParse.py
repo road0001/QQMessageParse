@@ -1,9 +1,13 @@
 import os
 import sys
 import json
+import time
 import base64
 
 '''
+- 20231226
+	- 去除日期数据写入功能。
+	- 加入图片数据生成时的数字滚动。
 - 20231225
 	- 优化文件写入性能。
 - 20231224
@@ -19,6 +23,16 @@ def pause(c=None):
 	if c:
 		print(c)
 	cmd('pause>nul')
+
+runningIndex=0
+def running():
+	global runningIndex
+	runningArr=['|','/','-','\\']
+	runningStr=runningArr[runningIndex]
+	runningIndex+=1
+	if runningIndex>=4:
+		runningIndex=0
+	return runningStr
 
 def parseLine(line):
 	line=line.strip()
@@ -171,7 +185,7 @@ def main(name):
 		boundarySplit=''
 		status=''
 
-		isOutputData=input('是否输出图片资源？[Y/N]')
+		isOutputData=input('是否输出图片资源？[Y/N] ')
 		if isOutputData=='y' or isOutputData=='Y':
 			isOutputData=True
 		else:
@@ -221,10 +235,13 @@ def main(name):
 							'location':'',
 							'data':'',
 						}
-						print(index,'Write IMG Data')
+						print(f'\r{index} Write IMG Data')
 				elif parse['type']=='data':
 					status='data'
 					contentData['data']+=parse['text']
+					# sys.stdout.write(f'\r{running()} {index}\t\t')
+					sys.stdout.write(f'\r{index}')
+					sys.stdout.flush()
 				elif parse['type']==False:
 					status=False
 				index+=1
