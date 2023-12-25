@@ -117,7 +117,7 @@ def writeData(data, commit=True):
 			'file':f'{dataFileName}.dat',
 			'name':fileName,
 			'offset':offsetIndex,
-			'size':len(realData)-1,
+			'size':len(realData),
 			'type':fileType,
 		}
 		offsetIndex=os.path.getsize(dataPath)

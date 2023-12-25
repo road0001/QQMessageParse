@@ -55,7 +55,7 @@ class ReadImg{
 		return new Promise((resolve, reject)=>{
 			let rs=fs.createReadStream(`${messagePath}/${this._imgData.file}`,{
 				start:this._imgData.offset,
-				end:this._imgData.offset + this._imgData.size,
+				end:this._imgData.offset + this._imgData.size - 1,
 			});
 			let buffer=[];
 			rs.on(`data`,(data)=>{
