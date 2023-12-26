@@ -78,27 +78,6 @@ function getClass(c){
 	return Array.from(document.getElementsByClassName(c));
 }
 
-function showImg(bool, src, dataSrc){
-	$(`.showImgBG`).remove();
-	if(bool==true){
-		$(`body`).append(`<div class="showImgBG"><table class="showImgTable"><tr><td><img class="showImg" src="${src}" data-src="${dataSrc}"></td></tr></table></div>`);
-		$(`.showImgBG`).bind(`click`,function(){
-			showImg(false);
-		});
-		$(`.showImg`).bind(`contextmenu`,function(e){
-			e.preventDefault();
-			let imageData=imgDataMap.get($(this).attr(`data-src`));
-			console.log(imageData);
-			let imageName=imageData.name.replaceAll(`.dat`,``);
-			let imageType=imageData.type.split(`/`)[1];
-			let image = document.createElement('a');
-			image.href = $(this).attr(`src`);
-			image.download = `${imageName}.${imageType}`;
-			image.click();
-		});
-	}
-}
-
 function applySearch(text, type){
 	$(`body`).unhighlight();
 	$(`#searchNum`).html(`&nbsp;`);
@@ -136,27 +115,23 @@ function applySearch(text, type){
 }
 
 function insertSearch(){
-	$(`body`).append(`<div class="searchBar">
-		<input id="searchInput" class="searchInput" placeholder="搜索"/>
-		<button id="searchNum" class="searchBu num">&nbsp;</button>
-		<button id="searchClear" class="searchBu clear" title="清空">×</button>
-		<button id="searchPrev" class="searchBu prev" title="上一个">↑</button>
-		<button id="searchNext" class="searchBu next" title="下一个">↓</button>
-		<button id="searchSubmit" class="searchBu submit" title="搜索">></button>
-	</div>`);
-	$(`#searchClear`).bind(`click`,function(){
-		$(`#searchInput`).val(``);
-		applySearch($(`#searchInput`).val(),`clear`);
-	});
-	$(`#searchPrev`).bind(`click`,function(){
-		applySearch($(`#searchInput`).val(),`prev`);
-	});
-	$(`#searchNext`).bind(`click`,function(){
-		applySearch($(`#searchInput`).val(),`next`);
-	});
-	$(`#searchSubmit`).bind(`click`,function(){
-		applySearch($(`#searchInput`).val());
-	});
+	$(`body`).appendDOM(`div`,{class:`searchBar`,children:[
+		{tag:`input`,attr:{id:`searchInput`,class:`searchInput`,placeholder:`搜索`}},
+		{tag:`button`,attr:{id:`searchNum`,class:`searchBu num`,html:`&nbsp;`}},
+		{tag:`button`,attr:{id:`searchClear`,class:`searchBu clear`,title:`清空`,html:`×`,bind:{click(){
+			$(`#searchInput`).val(``);
+			applySearch($(`#searchInput`).val(),`clear`);
+		}}}},
+		{tag:`button`,attr:{id:`searchPrev`,class:`searchBu prev`,title:`上一个`,html:`↑`,bind:{click(){
+			applySearch($(`#searchInput`).val(),`prev`);
+		}}}},
+		{tag:`button`,attr:{id:`searchNext`,class:`searchBu next`,title:`下一个`,html:`↓`,bind:{click(){
+			applySearch($(`#searchInput`).val(),`next`);
+		}}}},
+		{tag:`button`,attr:{id:`searchSubmit`,class:`searchBu submit`,title:`搜索`,html:`>`,bind:{click(){
+			applySearch($(`#searchInput`).val());
+		}}}},
+	]});
 	$(window).bind(`keydown`,function(e){
 		let keyCode = e.which || e.keyCode;
 		if (keyCode === 13) { // Enter键
@@ -186,27 +161,35 @@ async function main(){
 	for(let i=0; i<dateElement.length; i++){
 		dateDataArr.push(dateElement.eq(i).attr(`date`));
 	}
-	$(`body`).append(`<div id="dateSelector" class="dateSelector"></div>`);
+	
+	let dateChildren=[];
 	for(let i=0; i<dateDataArr.length; i++){
 		let curDate=dateDataArr[i];
 		let curDateSplit=curDate.split(`-`);
 		let curMonth=`${curDateSplit[0]}-${curDateSplit[1]}`;
 		if(window.location.pathname.includes(curMonth)){
 			let curDateFormat=new Date(curDate).format(`yyyy-MM-dd 星期w`);
-			$(`#dateSelector`).append(`<button id="dateBu_${curDate}" class="dateBu">${curDateFormat}</button>`);
-			if(i==0){
-				$(`#dateBu_${curDate}`).addClass(`selected`);
-			}
-			$(`#dateBu_${curDate}`).bind(`click`,{curDate:curDate},function(e){
-				// window.location.href=`#dateStr_${e.data.curDate}`;
-				$(`#dateStr_${e.data.curDate}`)[0].scrollIntoView({behavior:`smooth`,block:`center`,inline:`center`});
-				setTimeout(()=>{
-					$(`.dateBu`).removeClass(`selected`);
-					$(this).addClass(`selected`);
-				},50);
-			});
+			dateChildren.push({tag:`button`,attr:{
+				id:`dateBu_${curDate}`,
+				class:`dateBu ${i==0?`selected`:``}`,
+				html:curDateFormat,
+				bind:{
+					click:{
+						data:{curDate:curDate},
+						function(e){
+							$(`#dateStr_${e.data.curDate}`)[0].scrollIntoView({behavior:`smooth`,block:`center`,inline:`center`});
+							setTimeout(()=>{
+								$(`.dateBu`).removeClass(`selected`);
+								$(this).addClass(`selected`);
+							},50);
+						}
+					}
+				}
+			}});
 		}
 	}
+	$(`body`).appendDOM(`div`,{id:`dateSelector`,class:`dateSelector`,children:dateChildren});
+
 	let dateObserver = new IntersectionObserver(
 		(changes) => {
 			changes.forEach((change) => {
@@ -256,7 +239,7 @@ async function main(){
 	// });
 
 	$(`img`).bind(`click`,function(){
-		showImg(true,$(this).attr(`src`),$(this).attr(`data-src`));
+		global.showImg(true,$(this).attr(`src`),$(this).attr(`data-src`));
 	});
 	$(`img`).bind(`contextmenu`,function(e){
 		e.preventDefault();

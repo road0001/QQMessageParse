@@ -41,12 +41,18 @@ async function showMessage(name){
 		}
 		if(curHtml!=`index`){
 			messageFilesList.push({key:curHtml,path:curHtmlPath});
-			$(`#dateSelector`).append(`<button id="dateBu_${curHtml}" class="dateBu">${curHtml}</button>`);
-			if(i==0){
-				$(`#dateBu_${curHtml}`).addClass(`selected`);
-			}
-			$(`#dateBu_${curHtml}`).bind(`click`,{date:curHtml},function(e){
-				changePage(messagePath, curHtml);
+			$(`#dateSelector`).appendDOM(`button`,{
+				id:`dateBu_${curHtml}`,
+				class:`dateBu ${i==0?`selected`:``}`,
+				html:curHtml,
+				bind:{
+					click:{
+						data:{date:curHtml},
+						function(e){
+							changePage(messagePath, e.data.date);
+						}
+					}
+				}
 			});
 		}
 	}
@@ -101,6 +107,48 @@ global.applyGlobalSearch=function(text){
 	}
 }
 
+global.showImg=function(bool, src, dataSrc){
+	$(`.showImgBG`).animate({
+		opacity:0,
+	},250,()=>{
+		$(`.showImgBG`).remove();
+	});
+	if(bool==true){
+		$(`body`).appendDOM(`div`,{
+			class:`showImgBG`,bind:{
+				click(){
+					global.showImg(false);
+				}
+			},children:[
+				{tag:`table`,attr:{class:`showImgTable`,tbody:[
+					{attr:{},td:[
+						{attr:{children:[
+							{tag:`img`,attr:{class:`showImg`,src:src,'data-src':dataSrc,bind:{
+								contextmenu(e){
+									e.preventDefault();
+									let imageData=imgDataMap.get($(this).attr(`data-src`));
+									console.log(imageData);
+									let imageName=imageData.name.replaceAll(`.dat`,``);
+									let imageType=imageData.type.split(`/`)[1];
+									let image = document.createElement('a');
+									image.href = $(this).attr(`src`);
+									image.download = `${imageName}.${imageType}`;
+									image.click();
+								}
+							}}}
+						]}},
+					]},
+				]}}
+			]
+		});
+		$(`.showImgBG`).animate({
+			opacity:0,
+		},0).animate({
+			opacity:1
+		},250);
+	}
+}
+
 let wplInterval;
 async function waitPageLoaded(){
 	return new Promise((resolve, reject)=>{
@@ -126,14 +174,23 @@ async function main(){
 	let htmlFolders=getAllFolders(`./${messageFolder}/`);
 	htmlFolders.sort((a, b)=>{return a.localeCompare(b)});
 	if(htmlFolders.length==0){
-		$(`#messageSelector`).append(`<h2 class="messageNotice">${notice.empty}</h2>`);
+		$(`#messageSelector`).appendDOM(`h2`,{class:`messageNotice`,html:notice.empty});
 	}else{
 		for(let i=0; i<htmlFolders.length; i++){
 			let curFolder=htmlFolders[i].replaceAll(`${messageFolder}/`,``);
-			$(`#messageSelector`).append(`<button id="folder_${i}" class="messageBu">${curFolder}</button>`);
-			$(`#folder_${i}`).bind(`click`,{folder:curFolder},function(e){
-				showMessage(e.data.folder);
-			})
+			$(`#messageSelector`).appendDOM(`button`,{
+				id:`folder_${i}`,
+				class:`messageBu`,
+				html:curFolder,
+				bind:{
+					click:{
+						data:{folder:curFolder},
+						function(e){
+							showMessage(e.data.folder);
+						}
+					}
+				}
+			});
 		}
 	}
 

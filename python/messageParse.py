@@ -8,6 +8,9 @@ import base64
 - 20231226
 	- 去除日期数据写入功能。
 	- 加入图片数据生成时的数字滚动。
+	- 优化HTML写入性能。
+	- 优化图片数据解析性能。
+	- 修复在不输出图片时报错的bug。
 - 20231225
 	- 优化文件写入性能。
 - 20231224
@@ -58,7 +61,7 @@ def parseLine(line):
 
 htmlMonth='default'
 htmlMonthLast=''
-htmlScript='<script src="/scripts/jquery-3.0.0.min.js"></script><script src="/scripts/utils.js"></script><script src="/scripts/message.js"></script><link rel="stylesheet" href="/styles/message.css">'
+htmlScript='<script src="/scripts/jquery-3.0.0.min.js"></script><script src="/scripts/jquery.extensions.dom.js"></script><script src="/scripts/utils.js"></script><script src="/scripts/message.js"></script><link rel="stylesheet" href="/styles/message.css">'
 htmlHead='<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>QQ Message</title><style type="text/css">body{font-size:12px; line-height:22px; margin:2px;}td{font-size:12px; line-height:22px;}</style></head><body><table width="100%" cellspacing="0">'
 htmlTail='</table></body></html>'
 alreadyWriteScript=False
@@ -92,9 +95,11 @@ def writeHtml(html):
 
 	with open(f'{outputPath}/{htmlMonth}.html','a',encoding='utf-8') as f:
 		if not alreadyWriteScript:
-			f.write(f'{htmlHead}\n')
-			f.write(f'{htmlScript}\n')
-			f.write(f'{htmlStr}\n')
+			htmlArr=[htmlHead, htmlScript, htmlStr, '']
+			f.write('\n'.join(htmlArr))
+			# f.write(f'{htmlHead}\n')
+			# f.write(f'{htmlScript}\n')
+			# f.write(f'{htmlStr}\n')
 			# f.write(f'{htmlTail}\n')
 			alreadyWriteScript=True
 		else:
@@ -114,7 +119,7 @@ def writeData(data, commit=True):
 	fileName=data['location']
 	fileType=data['type']
 	fileEncoding=data['encoding']
-	fileData=data['data']
+	fileData=''.join(data['data'])
 	realData=None
 
 	if fileEncoding=='base64':
@@ -179,7 +184,7 @@ def main(name):
 			'type':'',
 			'encoding':'',
 			'location':'',
-			'data':'',
+			'data':[],
 		}
 		boundary=''
 		boundarySplit=''
@@ -216,7 +221,7 @@ def main(name):
 					contentData['encoding']=parse['text']
 				elif parse['type']=='Content-Location':
 					if not isOutputData:
-						outputDateList()
+						# outputDateList()
 						print('END WITHOUT DATA.')
 						break
 					status='Content-Location'
@@ -233,12 +238,12 @@ def main(name):
 							'type':'',
 							'encoding':'',
 							'location':'',
-							'data':'',
+							'data':[],
 						}
 						print(f'\r{index} Write IMG Data')
 				elif parse['type']=='data':
 					status='data'
-					contentData['data']+=parse['text']
+					contentData['data'].append(parse['text'])
 					# sys.stdout.write(f'\r{running()} {index}\t\t')
 					sys.stdout.write(f'\r{index}')
 					sys.stdout.flush()

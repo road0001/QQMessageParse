@@ -44,17 +44,6 @@ img{
 	background-color:#007FFF;
 }
 
-.showImgBG{
-	position:fixed;
-	top:0px;
-	left:0px;
-	right:0px;
-	bottom:0px;
-	background:rgba(0,0,0,0.75);
-	overflow:auto;
-	z-index:100;
-}
-
 .showImgForm{
 	display: flex;
 	justify-content: center;
@@ -97,7 +86,8 @@ img{
 }
 .searchInput{
 	/* width:calc(100% - (32px * 4) - 15px); */
-	width:calc(100% - (32px * 4) - 64px - 18px);
+	/* width:calc(100% - (32px * 4) - 64px - 18px); */
+	width:calc(100% - (32px * 4) - 64px);
 	height:100%;
 	padding:0px;
 	padding-left: 8px;
@@ -106,6 +96,7 @@ img{
 	outline:none;
 	background:transparent;
 	font-family: '微软雅黑';
+	vertical-align: top;
 }
 .searchBu{
 	padding: 0px;
@@ -117,6 +108,7 @@ img{
     line-height: 0px;
     font-size: 20px;
     background: transparent;
+	vertical-align: top;
 }
 .searchBu:hover{
 	background:#8EC3EB;
