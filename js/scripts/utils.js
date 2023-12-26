@@ -35,6 +35,18 @@ Date.prototype.format = function(fmt) {
 	return fmt; 
 }
 
+async function readFile(path,format=`utf-8`){
+	return new Promise((resolve,reject)=>{
+		fs.readFile(path, format, (err, data)=>{
+			if (err) {
+				reject(err);
+			}else{
+				resolve(data);
+			}
+		});
+	})
+}
+
 function getAllFiles(directory, ext) {
 	const files = [];
 

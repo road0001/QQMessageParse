@@ -96,7 +96,8 @@ img{
 	user-select: none;
 }
 .searchInput{
-	width:calc(100% - (32px * 4) - 15px);
+	/* width:calc(100% - (32px * 4) - 15px); */
+	width:calc(100% - (32px * 4) - 64px - 18px);
 	height:100%;
 	padding:0px;
 	padding-left: 8px;
@@ -129,6 +130,13 @@ img{
 }
 .searchBu.submit{
 	font-weight:bold;
+}
+.searchBu.num{
+	width:64px;
+	font-size:14px;
+	font-family: '微软雅黑';
+	pointer-events: none;
+	overflow:hidden;
 }
 
 .highlight{

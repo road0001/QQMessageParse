@@ -101,17 +101,22 @@ function showImg(bool, src, dataSrc){
 
 function applySearch(text, type){
 	$(`body`).unhighlight();
+	$(`#searchNum`).html(`&nbsp;`);
 	if(text){
 		$(`body`).highlight(text);
+		$(`#searchNum`).html(`${$(`.highlight`).length==0?`0`:`1`}/${$(`.highlight`).length}`);
 	}
+	global.applyGlobalSearch(text);
 	let textHightEl=$(`.highlight`);
 	switch(type){
 		case `prev`:
 			textHightEl.removeClass(`highlight2`);
 			for(let i=textHightEl.length-1; i>=0; i--){
-				if(textHightEl.eq(i)[0].getBoundingClientRect().y < 32 || i==0){
+				// if(textHightEl.eq(i)[0].getBoundingClientRect().y < 32 || i==0){
+				if(i==0 || textHightEl.eq(i)[0].getBoundingClientRect().y < window.innerHeight / 2 - 32){
 					textHightEl.eq(i)[0].scrollIntoView({behavior:`smooth`,block:`center`,inline:`center`});
 					textHightEl.eq(i).addClass(`highlight2`);
+					$(`#searchNum`).html(`${i+1}/${textHightEl.length}`);
 					break;
 				}
 			}
@@ -119,9 +124,10 @@ function applySearch(text, type){
 		case `next`:
 			textHightEl.removeClass(`highlight2`);
 			for(let i=0; i<textHightEl.length; i++){
-				if(textHightEl.eq(i)[0].getBoundingClientRect().y > window.innerHeight || i==textHightEl.length-1){
+				if(i==textHightEl.length-1 || textHightEl.eq(i)[0].getBoundingClientRect().y > window.innerHeight / 2 + 32){
 					textHightEl.eq(i)[0].scrollIntoView({behavior:`smooth`,block:`center`,inline:`center`});
 					textHightEl.eq(i).addClass(`highlight2`);
+					$(`#searchNum`).html(`${i+1}/${textHightEl.length}`);
 					break;
 				}
 			}
@@ -132,6 +138,7 @@ function applySearch(text, type){
 function insertSearch(){
 	$(`body`).append(`<div class="searchBar">
 		<input id="searchInput" class="searchInput" placeholder="搜索"/>
+		<button id="searchNum" class="searchBu num">&nbsp;</button>
 		<button id="searchClear" class="searchBu clear" title="清空">×</button>
 		<button id="searchPrev" class="searchBu prev" title="上一个">↑</button>
 		<button id="searchNext" class="searchBu next" title="下一个">↓</button>
@@ -158,13 +165,20 @@ function insertSearch(){
 	});
 }
 
+let loadCompleted=false;
+function setLoadCompleted(){
+	loadCompleted=true;
+}
+function isLoadCompleted(){
+	return loadCompleted;
+}
+
 async function main(){
 	let pathSplit=window.location.pathname.split(`/`);
 	pathSplit.shift();
 	pathSplit.pop();
 	messagePath=decodeURIComponent(pathSplit.join(`/`));
-
-	await loadConfig(`${messagePath}/imgdata.json`);
+	insertSearch();
 
 	//日期选择列表
 	let dateElement=$(`.dateTag`);
@@ -210,9 +224,8 @@ async function main(){
 	getClass(`dateTag`).forEach((item) => {
 		dateObserver.observe(item);
 	});
-
-	insertSearch();
-
+	setTimeout(()=>{setLoadCompleted()},500);
+	await loadConfig(`${messagePath}/imgdata.json`);
 	//图片列表（懒加载）
 	// let imgObserver = new IntersectionObserver(
 	// 	(changes) => {
