@@ -5,6 +5,9 @@ import time
 import base64
 
 '''
+- 20231227
+	- 加入输出用时。
+	- 加入脚本、样式强制指定编码功能，防止乱码。
 - 20231226
 	- 去除日期数据写入功能。
 	- 加入图片数据生成时的数字滚动。
@@ -37,6 +40,23 @@ def running():
 		runningIndex=0
 	return runningStr
 
+def formatSeconds(s):
+	timeObj=time.gmtime(s)
+	timeStr=''
+	if s<60:
+		# timeStr=f'{round(s,2)}秒'
+		timeStr=f'{s:.2f}秒'
+	else:
+		if timeObj.tm_yday-1>0:
+			timeStr+=f'{timeObj.tm_yday-1}天'
+		if timeObj.tm_hour>0:
+			timeStr+=f'{timeObj.tm_hour}小时'
+		if timeObj.tm_min>0:
+			timeStr+=f'{timeObj.tm_min}分'
+		if timeObj.tm_sec>=0:
+			timeStr+=f'{timeObj.tm_sec}秒'
+	return timeStr
+
 def parseLine(line):
 	line=line.strip()
 	if line=='' or line=='\r' or line=='\n' or line=='\r\n':
@@ -61,8 +81,8 @@ def parseLine(line):
 
 htmlMonth='default'
 htmlMonthLast=''
-htmlScript='<script src="/scripts/jquery-3.0.0.min.js"></script><script src="/scripts/jquery.extensions.dom.js"></script><script src="/scripts/utils.js"></script><script src="/scripts/message.js"></script><link rel="stylesheet" href="/styles/message.css">'
-htmlHead='<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>QQ Message</title><style type="text/css">body{font-size:12px; line-height:22px; margin:2px;}td{font-size:12px; line-height:22px;}</style></head><body><table width="100%" cellspacing="0">'
+htmlScript='<script src="/scripts/jquery-3.0.0.min.js" charset="UTF-8"></script><script src="/scripts/jquery.extensions.dom.js" charset="UTF-8"></script><script src="/scripts/utils.js" charset="UTF-8"></script><script src="/scripts/message.js" charset="UTF-8"></script><link rel="stylesheet" href="/styles/message.css" charset="UTF-8">'
+htmlHead='<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="UTF-8"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>QQ Message</title><style type="text/css">body{font-size:12px; line-height:22px; margin:2px;}td{font-size:12px; line-height:22px;}</style></head><body><table width="100%" cellspacing="0">'
 htmlTail='</table></body></html>'
 alreadyWriteScript=False
 # htmlDateList=[]
@@ -189,6 +209,10 @@ def main(name):
 		boundary=''
 		boundarySplit=''
 		status=''
+		beginTime=0
+		endTime=0
+		totalBeginTime=0
+		totalEndTime=0
 
 		isOutputData=input('是否输出图片资源？[Y/N] ')
 		if isOutputData=='y' or isOutputData=='Y':
@@ -197,6 +221,7 @@ def main(name):
 			isOutputData=False
 
 		outputPath=f'{outputDir}/{folderName}'
+		totalBeginTime=time.time()
 		if not exist(outputPath):
 			os.makedirs(outputPath)
 		while True:
@@ -206,7 +231,8 @@ def main(name):
 					if isOutputData:
 						outputOffset()
 					# outputDateList()
-					print('END.')
+					totalEndTime=time.time()
+					print(f'END. [{formatSeconds(totalEndTime - totalBeginTime)}]')
 					break
 				parse=parseLine(data)
 				if parse['type']=='html':
@@ -222,7 +248,8 @@ def main(name):
 				elif parse['type']=='Content-Location':
 					if not isOutputData:
 						# outputDateList()
-						print('END WITHOUT DATA.')
+						totalEndTime=time.time()
+						print(f'END WITHOUT DATA. [{formatSeconds(totalEndTime - totalBeginTime)}]')
 						break
 					status='Content-Location'
 					contentData['location']=parse['text']
@@ -234,13 +261,16 @@ def main(name):
 					boundarySplit=parse['text']
 					if isOutputData:
 						writeData(contentData)
+						endTime=time.time()
+						print(f'\r{index} Write IMG Data [{formatSeconds(endTime - beginTime)}]')
+
+						beginTime=time.time()
 						contentData={
 							'type':'',
 							'encoding':'',
 							'location':'',
 							'data':[],
 						}
-						print(f'\r{index} Write IMG Data')
 				elif parse['type']=='data':
 					status='data'
 					contentData['data'].append(parse['text'])

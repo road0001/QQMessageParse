@@ -1,178 +1,3 @@
-/*
-	JQuery Extensions DOM
-	(c) 2020-2023 JMRY
-	MIT Licensed.
-
-	Version: 1.0.8 Build 20231222
-		- 加入获取生成的HTML功能。
-	Version: 1.0.7 Build 20230606
-		- 加入表格DOM的语法糖。
-		- 修复部分情况下，元素中children会出现重复内容的bug。
-	Version: 1.0.6 Build 20210514
-		- 修复部分情况下，appendDOM中直接传递对象时无法添加元素的bug。
-	Version: 1.0.5 Build 20210301
-	Version: 1.0.4 Build 20200908
-
-	Feature:
-		Optimize JQuery experience of insert DOM.
-		Use object to instead string to generate HTML DOM string or objects.
-
-	How to use:
-		Get the DOM string:
-			$.getDOMString(`div`,{id:`div`,class:`div`},`This is a DIV.`);
-		Insert element:
-			$(`body`).appendDOM(`div`,{id:`div`,class:`div`},`This is a DIV.`);
-			$(`body`).prependDOM(`div`,{id:`div`,class:`div`},`This is a DIV.`);
-			$(`body`).beforeDOM(`div`,{id:`div`,class:`div`},`This is a DIV.`);
-			$(`body`).afterDOM(`div`,{id:`div`,class:`div`},`This is a DIV.`);
-			$(`body`).htmlDOM(`div`,{id:`div`,class:`div`},`This is a DIV.`);
-		
-		Events bind:
-			$(`body`).appendDOM(`div`,{
-				id:`div`,class:[`div`,`div2`],
-				bind:{
-					click(e){
-						console.log(`test`);
-					}
-				}
-			},`This is a DIV.`);
-
-			The bind events can also push the data:
-				$(`body`).appendDOM(`div`,{
-					id:`div`,class:`div`,
-					bind:{
-						click:{
-							data:{index:1},
-							function(e){
-								console.log(e.data.index);
-							}
-						}
-					}
-				},`This is a DIV.`);
-			
-		Styles with JQuery css object struct:
-			$(`body`).appendDOM(`div`,{
-				id:`div`,class:[`div`,`div2`],
-				style:{
-					backgrundColor:`#FFF`,
-					opacity:0,
-				}
-			},`This is a DIV.`);
-
-		Children elements:
-		You can direct insert multi-children in one element, and supports cascade.
-			$(`body`).appendDOM(`div`,{
-				id:`div`,class:[`div`,`div2`],
-				children:[
-					{
-						tag:`div`,
-						attr:{
-							id:`div_child_1`,class:[`div`,`div_child`],
-							children:{
-								tag:`div`,
-								attr:{
-									id:`div_grandson`,class:[`div`,`div_child`,`div_grandson`]
-								},
-								html:`This is a grandson DIV.`
-							}
-						},
-						html:`This is a child DIV.`
-					},
-					{
-						tag:`div`,
-						attr:{
-							id:`div_child_2`,class:[`div`,`div_child`],
-						},
-						html:`This is a child DIV.`
-					}
-				]
-			},`This is a DIV.`);
-
-		Table elements:
-		You can insert table and table body like this:
-			$(`body`).appendDOM(`table`,{
-				id:`testTable`,class:`testTable`,tbody:[
-					{attr:{id:`tr1`,class:`tr1`},td:[
-						{attr:{id:`td1`,class:`td1`,html:`test td 1`}},
-						{attr:{id:`td2`,class:`td2`},html:`test td 2`},
-						{html:`test td 3`},
-						`test td 4`,
-					]},
-					{td:[
-						{attr:{id:`td1`,class:`td1`,html:`test td 31`}},
-						{attr:{id:`td2`,class:`td2`},html:`test td 32`},
-						{html:`test td 33`},
-						`test td 34`,
-					]},
-				],
-			});
-
-		HTML string in attributes without dom_html param:
-			Notice: the priority of HTML string in attributes is higher than dom_html param.
-			$(`body`).appendDOM(`div`,{
-				id:`div`,class:[`div`,`div2`],
-				html:`This is a DIV.`,
-				children:{
-					tag:`div`,
-					attr:{
-						id:`div_child_1`,class:[`div`,`div_child`],
-						html:`This is a child DIV.`
-					}
-				}
-			});
-
-		You can also insert element without attributes:
-			$(`body`).appendDOM(`div`,`This is a DIV.`);
-
-		Use object to insert element:
-			$(`body`).appendDOM({
-				tag:`div`,
-				attr:{
-					id:`div`,class:[`div`,`div2`],
-					html:`This is a DIV.`,
-					children:{
-						tag:`div`,
-						attr:{
-							id:`div_child_1`,class:[`div`,`div_child`],
-							html:`This is a child DIV.`
-						}
-					}
-				}
-			})
-
-		Batch insert elements:
-			$(`body`).appendDOM([
-				{
-					tag:`div`,
-					attr:{
-						id:`div1`,class:[`div`,`div1`],
-						html:`This is a DIV 1.`,
-						children:{
-							tag:`div`,
-							attr:{
-								id:`div_child_1`,class:[`div`,`div_child`],
-								html:`This is a child DIV 1.`
-							}
-						}
-					}
-				},
-				{
-					tag:`div`,
-					attr:{
-						id:`div2`,class:[`div`,`div2`],
-						html:`This is a DIV 2.`,
-						children:{
-							tag:`div`,
-							attr:{
-								id:`div_child_1`,class:[`div`,`div_child`],
-								html:`This is a child DIV 2.`
-							}
-						}
-					}
-				},
-			])
-*/
-
 $.getDOMString=function(dom_tag,dom_attr,dom_html){
 	/*
 	dom_tag:string
@@ -243,7 +68,7 @@ $.getDOMString=function(dom_tag,dom_attr,dom_html){
 						allow_insert_attr=false;
 					break;
 					//tbody属性处理
-					case `tbody`:
+					case `tbody`: case `tr`: case `td`:
 						allow_insert_attr=false;
 					break;
 				}
@@ -324,13 +149,13 @@ $.getDOMObject=function(dom_tag,dom_attr,dom_html){
 			try{
 				if(typeof dom_attr.children==`object`){
 					let default_children={
-						tag:undefined,attr:undefined,html:undefined,type:`append`
+						tag:undefined,attr:undefined,html:undefined,attachType:`append`
 					};
 
 					if(dom_attr.children.length==undefined){
 						/*仅一个子项时，可以直接使用Object
 						{
-							tag:`html`,attr:{id:`id`},html:`Test`,type:`append`
+							tag:`html`,attr:{id:`id`},html:`Test`,attachType:`append`
 						}
 						*/
 						let children={
@@ -338,15 +163,16 @@ $.getDOMObject=function(dom_tag,dom_attr,dom_html){
 							...JSON.parse(JSON.stringify(default_children)),
 							...dom_attr.children,
 						}
-						domObject.attachDOM(children.tag,children.attr,children.html,children.type);
+						// domObject.attachDOM(children.tag,children.attr,children.html,children.attachType);
+						domObject.attachDOM(children);
 					}else{
 						/*多个子项时，采用数组形式
 						[
 							{
-								tag:`html`,attr:{id:`id1`},html:`Test1`,type:`append`
+								tag:`html`,attr:{id:`id1`},html:`Test1`,attachType:`append`
 							},
 							{
-								tag:`html`,attr:{id:`id2`},html:`Test2`,type:`append`
+								tag:`html`,attr:{id:`id2`},html:`Test2`,attachType:`append`
 							},
 						]
 						*/
@@ -356,7 +182,8 @@ $.getDOMObject=function(dom_tag,dom_attr,dom_html){
 								...JSON.parse(JSON.stringify(default_children)),
 								...dom_attr.children[i],
 							}
-							domObject.attachDOM(children.tag,children.attr,children.html,children.type);
+							// domObject.attachDOM(children.tag,children.attr,children.html,children.attachType);
+							domObject.attachDOM(children);
 						}
 					}
 				}
@@ -366,21 +193,22 @@ $.getDOMObject=function(dom_tag,dom_attr,dom_html){
 
 			//TBODY表格
 			try{
-				if(typeof dom_attr.tbody==`object`){
+				if(typeof dom_attr.tbody==`object` || typeof dom_attr.tr==`object`){
 					let default_tr={
-						tag:`tr`,attr:{},html:undefined,children:[],type:`append`
+						tag:`tr`,attr:undefined,html:undefined,children:[],attachType:`append`
 					};
 					let default_td={
-						tag:`td`,attr:{},html:undefined,children:[],type:`append`
+						tag:`td`,attr:undefined,html:undefined,children:[],attachType:`append`
 					}
-					let trList=[];
-					for(let i=0; i<dom_attr.tbody.length; i++){
-						let curTr=dom_attr.tbody[i];
+					let trList=dom_attr.tbody || dom_attr.tr;
+					for(let i=0; i<trList.length; i++){
+						let curTr=trList[i];
 						let tr={
 							...JSON.parse(JSON.stringify(default_tr)),
 							...curTr
 						}
-						let trDomObject=domObject.attachDOM(tr.tag,tr.attr,tr.html,tr.type);
+						// let trDomObject=domObject.attachDOM(tr.tag,tr.attr,tr.html,tr.attachType);
+						let trDomObject=domObject.attachDOM(tr);
 						for(let j=0; j<curTr.td.length; j++){
 							let curTd=curTr.td[j];
 							if(typeof curTd==`string`){
@@ -390,7 +218,8 @@ $.getDOMObject=function(dom_tag,dom_attr,dom_html){
 								...JSON.parse(JSON.stringify(default_td)),
 								...curTd,
 							}
-							trDomObject.attachDOM(td.tag,td.attr,td.html,td.type);
+							// trDomObject.attachDOM(td.tag,td.attr,td.html,td.attachType);
+							trDomObject.attachDOM(td);
 						}
 					}
 					
@@ -410,11 +239,11 @@ $.fn.attachDOM=function(dom_tag, dom_attr, dom_html, attach_type){
 	//dom_tag为数组时，批量为母元素添加元素
 	if(typeof dom_tag==`object` && dom_tag.length!=undefined){
 		let default_children={
-			tag:undefined,attr:undefined,html:undefined,type:`append`
+			tag:undefined,attr:undefined,html:undefined,attachType:`append`
 		};
 		for(let cur of dom_tag){
 			cur={
-				...default_children,
+				...JSON.parse(JSON.stringify(default_children)),
 				...cur,
 			}
 			this.attachDOM(cur);
@@ -424,11 +253,28 @@ $.fn.attachDOM=function(dom_tag, dom_attr, dom_html, attach_type){
 
 	//dom_tag为对象时，和普通情况一样
 	if(typeof dom_tag==`object` && dom_tag.length==undefined){
-		dom_attr=dom_tag.attr;
+		let dom_attr_fix_blacklist=[
+			`tag`,`attachType`,
+		]
+		let dom_attr_fix_replace={
+			tagName:`tag`, attrName:`attr`,
+		}
+		let dom_attr_fix={};
+		if(dom_tag.attr==undefined){
+			for(let key in dom_tag){
+				if(!dom_attr_fix_blacklist.includes(key)){
+					let key_fix=key;
+					for(let origin in dom_attr_fix_replace){
+						key_fix=key_fix.replace(origin,dom_attr_fix_replace[origin]);
+					}
+					dom_attr_fix[key_fix]=dom_tag[key];
+				}
+			}
+		}
+		dom_attr=dom_tag.attr || dom_attr_fix;
 		dom_html=dom_tag.html;
-		attach_type=dom_tag.type || attach_type;
+		attach_type=dom_tag.attachType || attach_type;
 		dom_tag=dom_tag.tag;
-		
 	}
 
 	let domObject=$.getDOMObject(dom_tag, dom_attr, dom_html);
@@ -472,6 +318,6 @@ $.fn.htmlDOM=function(dom_tag,dom_attr,dom_html){
 $.fn.getHtml=function(dom_tag,dom_attr,dom_html){
 	return this.attachDOM(dom_tag,dom_attr,dom_html,`html`)[0].outerHTML;
 }
-$.getHtml=function(dom_tag,dom_attr,dom_html){
+$.getDOMHtml=function(dom_tag,dom_attr,dom_html){
 	return $.fn.getHtml(dom_tag,dom_attr,dom_html);
 }

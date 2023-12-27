@@ -1,6 +1,6 @@
 // let imgDataObj={};
-let messagePath;
-let imgDataMap=new Map();
+messagePath=``;
+imgDataMap=new Map();
 async function loadConfig(name){
 	return new Promise((resolve, reject)=>{
 		fs.readFile(name, `utf-8`, (err, data)=>{
@@ -116,21 +116,21 @@ function applySearch(text, type){
 
 function insertSearch(){
 	$(`body`).appendDOM(`div`,{class:`searchBar`,children:[
-		{tag:`input`,attr:{id:`searchInput`,class:`searchInput`,placeholder:`搜索`}},
-		{tag:`button`,attr:{id:`searchNum`,class:`searchBu num`,html:`&nbsp;`}},
-		{tag:`button`,attr:{id:`searchClear`,class:`searchBu clear`,title:`清空`,html:`×`,bind:{click(){
+		{tag:`input`,id:`searchInput`,class:`searchInput`,placeholder:`搜索`},
+		{tag:`button`,id:`searchNum`,class:`searchBu num`,html:`&nbsp;`},
+		{tag:`button`,id:`searchClear`,class:`searchBu clear`,title:`清空`,html:`×`,bind:{click(){
 			$(`#searchInput`).val(``);
 			applySearch($(`#searchInput`).val(),`clear`);
-		}}}},
-		{tag:`button`,attr:{id:`searchPrev`,class:`searchBu prev`,title:`上一个`,html:`↑`,bind:{click(){
+		}}},
+		{tag:`button`,id:`searchPrev`,class:`searchBu prev`,title:`上一个`,html:`↑`,bind:{click(){
 			applySearch($(`#searchInput`).val(),`prev`);
-		}}}},
-		{tag:`button`,attr:{id:`searchNext`,class:`searchBu next`,title:`下一个`,html:`↓`,bind:{click(){
+		}}},
+		{tag:`button`,id:`searchNext`,class:`searchBu next`,title:`下一个`,html:`↓`,bind:{click(){
 			applySearch($(`#searchInput`).val(),`next`);
-		}}}},
-		{tag:`button`,attr:{id:`searchSubmit`,class:`searchBu submit`,title:`搜索`,html:`>`,bind:{click(){
+		}}},
+		{tag:`button`,id:`searchSubmit`,class:`searchBu submit`,title:`搜索`,html:`>`,bind:{click(){
 			applySearch($(`#searchInput`).val());
-		}}}},
+		}}},
 	]});
 	$(window).bind(`keydown`,function(e){
 		let keyCode = e.which || e.keyCode;
@@ -169,7 +169,8 @@ async function main(){
 		let curMonth=`${curDateSplit[0]}-${curDateSplit[1]}`;
 		if(window.location.pathname.includes(curMonth)){
 			let curDateFormat=new Date(curDate).format(`yyyy-MM-dd 星期w`);
-			dateChildren.push({tag:`button`,attr:{
+			dateChildren.push({
+				tag:`button`,
 				id:`dateBu_${curDate}`,
 				class:`dateBu ${i==0?`selected`:``}`,
 				html:curDateFormat,
@@ -185,7 +186,7 @@ async function main(){
 						}
 					}
 				}
-			}});
+			});
 		}
 	}
 	$(`body`).appendDOM(`div`,{id:`dateSelector`,class:`dateSelector`,children:dateChildren});
