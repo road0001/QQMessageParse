@@ -1,5 +1,6 @@
 *.7z
 *.zip
+*.bak
 QQMessageParse
 *.spec
 python/build

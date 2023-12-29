@@ -1,5 +1,8 @@
 # QQMessageParse
 
+- 1.0 Build 20231229
+	- 更新JQueryDOM插件。
+
 - 1.0 Build 20231228
 	- 更新JQueryDOM插件。
 

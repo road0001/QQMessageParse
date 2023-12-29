@@ -1,242 +1,124 @@
-getDOMString=function(dom_tag,dom_attr,dom_html){
-	/*
-	dom_tag:string
-		HTML tags, like div, input, p, button, and so on.
-	dom_attr:object
-		HTML attributes, struct:
-		{
-			id:`id`,
-			class:`class1 class2` OR [`class1`,`class2`],
-			style:`border:none;` OR {border:`none`},
-
-			Extend attributes:
-			bind:{
-				click:function,
-			},
-		}
-	dom_attr:string
-		HTML inner text
-	dom_html:string
-		HTML inner text
-	*/
-
-	//属性黑名单指的是在遍历属性时直接忽略的key。
-	//如果需要处理这些key但不要插入html中，则应使用allow_insert_attr，将它置为false即可。
-	let attr_blacklist=[
-		`bind`,`children`,
-	]
-	
-	if(dom_tag==undefined){ //html标记为空时，直接返回空值
-		return ``;
-	}else if(dom_tag!=undefined && dom_attr==undefined && dom_html==undefined){ //html标记不为空、属性和内容为空时，直接返回字符串
-		return dom_tag;
-	}else if(dom_tag!=undefined && dom_attr!=undefined && dom_html==undefined){
-		dom_html=``;
-	}
-
-	let dom_attr_string=``;
-
-	//dom_attr is string, it will be the inner html, without attributes.
-	if(typeof dom_attr==`string`){
-		dom_html=dom_attr;
-	}else if(typeof dom_attr==`object`){
-		let allow_insert_attr;
-		for(let key in dom_attr){
-			allow_insert_attr=true;
-			let cur_dom_attr=dom_attr[key];
-			// if(key!=`bind`){
-			// if(jQuery.inArray(key,attr_blacklist)<0){
-			if(!attr_blacklist.includes(key)){
-				//HTML属性的特殊处理
-				switch(key){
-					//Class数组化处理
-					case `class`:
-						if(typeof cur_dom_attr==`object`){
-							cur_dom_attr=cur_dom_attr.join(` `);
-						}
-					break;
-
-					//Style对象化处理（交给getDOMObject，因此将allow_insert_attr置为false，以跳过插入属性）
-					case `style`:
-						if(typeof cur_dom_attr==`object`){
-							allow_insert_attr=false;
-						}
-					break;
-
-					//Html属性转为text。此属性会覆盖dom_html参数，因此不可混用
-					case `html`:
-						dom_html=cur_dom_attr;
-						allow_insert_attr=false;
-					break;
-					//tbody属性处理
-					case `tbody`: case `tr`: case `td`:
-						allow_insert_attr=false;
-					break;
-				}
-
-				//cur_dom_attr为undefined、null时，不插入此属性
-				if(cur_dom_attr!=undefined && cur_dom_attr!=null && allow_insert_attr){
-					dom_attr_string+=` ${key}="${cur_dom_attr}"`;
-				}
-			}
-		}
-	}
-
-	if(dom_tag==`html`){
-		return `${dom_html}`;
-	}
-	
-	return `<${dom_tag}${dom_attr_string}>${dom_html}</${dom_tag}>`;
-}
-
-getDOMHtml=function(dom_tag,dom_attr,dom_html){
-	let domFullHtml=[];
-	//dom_tag为数组时，批量为母元素添加元素
-	if(typeof dom_tag==`object` && dom_tag.length!=undefined){
-		let default_children={
-			tag:undefined,attr:undefined,html:undefined,attachType:`append`
-		};
-		for(let cur of dom_tag){
-			cur={
-				...JSON.parse(JSON.stringify(default_children)),
-				...cur,
-			}
-			domFullHtml.push(getDOMHtml(cur));
-		}
-		return domFullHtml.join(``);
-	}
-
-	//dom_tag为对象时，和普通情况一样
-	if(typeof dom_tag==`object` && dom_tag.length==undefined){
-		let dom_attr_fix_blacklist=[
-			`tag`,`attachType`,
-		]
-		let dom_attr_fix_replace={
-			tagName:`tag`, attrName:`attr`,
-		}
-		let dom_attr_fix={};
-		if(dom_tag.attr==undefined){
-			for(let key in dom_tag){
-				if(!dom_attr_fix_blacklist.includes(key)){
-					let key_fix=key;
-					for(let origin in dom_attr_fix_replace){
-						key_fix=key_fix.replace(origin,dom_attr_fix_replace[origin]);
-					}
-					dom_attr_fix[key_fix]=dom_tag[key];
-				}
-			}
-		}
-		dom_attr=dom_tag.attr || dom_attr_fix;
-		dom_html=dom_attr.html || dom_tag.html;
-		dom_tag=dom_tag.tag;
-	}
-
-	if(typeof dom_attr==`object`){
-		if(typeof dom_attr.class==`object` && dom_attr.class.length){
-			dom_attr.class=dom_attr.class.join(` `);
-		}
-		if(typeof dom_attr.style==`object`){
-			let styleList=[];
-			for(let key in dom_attr.style){
-				styleList.push(`${key.replace(/([A-Z])/g,"-$1").toLowerCase()}: ${dom_attr.style[key]}`);
-			}
-			dom_attr.style=styleList.join(`;`);
-		}
-	}
-
-	let attr_blacklist=[
-		`bind`,`children`,`html`,`tbody`,`tr`,`td`,
-	]
-	let domElement=document.createElement(dom_tag);
-	if(typeof dom_attr==`object`){
-		for(let key in dom_attr){
-			if(!attr_blacklist.includes(key)){
-				domElement.setAttribute(key, dom_attr[key]);
-			}
-		}
-	}else if(typeof dom_attr==`string`){
-		domFullHtml.push(dom_attr);
-	}
-	if(dom_html){
-		domFullHtml.push(dom_html);
-	}
-
-	if(typeof dom_attr==`object` && typeof dom_attr.children==`object`){
-		let default_children={
-			tag:undefined,attr:undefined,html:undefined,
-		};
-
-		if(dom_attr.children.length==undefined){
-			/*仅一个子项时，可以直接使用Object
-			{
-				tag:`html`,attr:{id:`id`},html:`Test`,attachType:`append`
-			}
-			*/
-			let children={
-				...JSON.parse(JSON.stringify(default_children)),
-				...dom_attr.children,
-			}
-			domFullHtml.push(getDOMHtml(children));
-		}else{
-			/*多个子项时，采用数组形式
-			[
-				{
-					tag:`html`,attr:{id:`id1`},html:`Test1`,attachType:`append`
-				},
-				{
-					tag:`html`,attr:{id:`id2`},html:`Test2`,attachType:`append`
-				},
-			]
-			*/
-			for(let i=0; i<dom_attr.children.length; i++){
-				let children={
-					...JSON.parse(JSON.stringify(default_children)),
-					...dom_attr.children[i],
-				}
-				domFullHtml.push(getDOMHtml(children));
-			}
-		}
-	}
-
-	if(typeof dom_attr==`object` && (typeof dom_attr.tbody==`object` || typeof dom_attr.tr==`object`)){
-		let default_tr={
-			tag:`tr`,attr:undefined,html:undefined,children:[],
-		};
-		let default_td={
-			tag:`td`,attr:undefined,html:undefined,children:[],
-		}
-		let trList=dom_attr.tbody || dom_attr.tr;
-		let domTrHtml=[];
-		for(let i=0; i<trList.length; i++){
-			let curTr=trList[i];
-			let tr={
-				...JSON.parse(JSON.stringify(default_tr)),
-				...curTr
-			}
-			for(let j=0; j<curTr.td.length; j++){
-				let curTd=curTr.td[j];
-				if(typeof curTd==`string`){
-					curTd={html:curTd};
-				}
-				let td={
-					...JSON.parse(JSON.stringify(default_td)),
-					...curTd,
-				}
-				tr.children.push(td);
-			}
-			domTrHtml.push(tr);
-		}
-		domFullHtml.push(getDOMHtml(domTrHtml));
-	}
-
-	domElement.innerHTML=domFullHtml.join(``);
-	return domElement.outerHTML;
-}
-
 if(typeof jQuery===`function`){
+	jQuery.getDOMString=function(dom_tag,dom_attr,dom_html){
+		/*
+		dom_tag:string
+			HTML tags, like div, input, p, button, and so on.
+		dom_attr:object
+			HTML attributes, struct:
+			{
+				id:`id`,
+				class:`class1 class2` OR [`class1`,`class2`],
+				style:`border:none;` OR {border:`none`},
+	
+				Extend attributes:
+				bind:{
+					click:function,
+				},
+			}
+		dom_attr:string
+			HTML inner text
+		dom_html:string
+			HTML inner text
+		*/
+	
+		//属性黑名单指的是在遍历属性时直接忽略的key。
+		//如果需要处理这些key但不要插入html中，则应使用allow_insert_attr，将它置为false即可。
+		let attr_blacklist=[
+			`bind`,`children`,
+		]
+		
+		if(dom_tag==undefined){ //html标记为空时，直接返回空值
+			return ``;
+		}else if(dom_tag!=undefined && dom_attr==undefined && dom_html==undefined){ //html标记不为空、属性和内容为空时，直接返回字符串
+			return dom_tag;
+		}else if(dom_tag!=undefined && dom_attr!=undefined && dom_html==undefined){
+			dom_html=``;
+		}
+	
+		let dom_attr_string=[];
+	
+		//dom_attr is string, it will be the inner html, without attributes.
+		if(typeof dom_attr==`string`){
+			dom_html=dom_attr;
+		}else if(typeof dom_attr==`object`){
+			let allow_insert_attr;
+			for(let key in dom_attr){
+				allow_insert_attr=true;
+				let cur_dom_attr=dom_attr[key];
+				// if(key!=`bind`){
+				// if(jQuery.inArray(key,attr_blacklist)<0){
+				if(!attr_blacklist.includes(key)){
+					//HTML属性的特殊处理
+					switch(key){
+						//Class数组化处理
+						case `class`:
+							if(typeof cur_dom_attr==`object`){
+								cur_dom_attr=cur_dom_attr.join(` `);
+							}
+						break;
+	
+						//Style对象化处理（交给getDOMObject，因此将allow_insert_attr置为false，以跳过插入属性）
+						case `style`:
+							if(typeof cur_dom_attr==`object`){
+								allow_insert_attr=false;
+							}
+						break;
+	
+						//Html属性转为text。此属性会覆盖dom_html参数，因此不可混用
+						case `html`:
+							dom_html=cur_dom_attr;
+							allow_insert_attr=false;
+						break;
+						//tbody属性处理
+						case `tbody`: case `tr`: case `td`:
+							allow_insert_attr=false;
+						break;
+					}
+	
+					//cur_dom_attr为undefined、null时，不插入此属性
+					if(cur_dom_attr!=undefined && cur_dom_attr!=null && allow_insert_attr){
+						dom_attr_string.push(`${key.replace(/([A-Z])/g,"-$1").toLowerCase()}="${cur_dom_attr}"`);
+					}
+				}
+			}
+		}
+	
+		if(dom_tag==`html`){
+			return `${dom_html}`;
+		}
+		
+		return `<${dom_tag} ${dom_attr_string.join(` `)}>${dom_html}</${dom_tag}>`;
+	}
+
 	jQuery.getDOMObject=function(dom_tag,dom_attr,dom_html){
+		//dom_tag为对象时，和普通情况一样
+		if(typeof dom_tag==`object` && dom_tag.length==undefined){
+			let dom_attr_fix_blacklist=[
+				`tag`,`attachType`,
+			]
+			let dom_attr_fix_replace={
+				tagName:`tag`, attrName:`attr`,
+			}
+			let dom_attr_fix={};
+			if(dom_tag.attr==undefined){
+				for(let key in dom_tag){
+					if(!dom_attr_fix_blacklist.includes(key)){
+						let key_fix=key;
+						for(let origin in dom_attr_fix_replace){
+							key_fix=key_fix.replace(origin,dom_attr_fix_replace[origin]);
+						}
+						dom_attr_fix[key_fix]=dom_tag[key];
+					}
+				}
+			}
+			dom_attr=dom_tag.attr || dom_attr_fix;
+			dom_html=dom_tag.html;
+			attach_type=dom_tag.attachType || attach_type;
+			dom_tag=dom_tag.tag;
+		}
+
 		try{
-			let domObject=jQuery(getDOMString(dom_tag, dom_attr, dom_html));
+			let domObject=jQuery(jQuery.getDOMString(dom_tag, dom_attr, dom_html));
 			if(typeof dom_attr==`object`){
 				//DOM样式
 				try{
@@ -310,7 +192,7 @@ if(typeof jQuery===`function`){
 								...dom_attr.children,
 							}
 							// domObject.attachDOM(children.tag,children.attr,children.html,children.attachType);
-							domObject.attachDOM(children);
+							domObject.append(jQuery.getDOMObject(children));
 						}else{
 							/*多个子项时，采用数组形式
 							[
@@ -329,7 +211,7 @@ if(typeof jQuery===`function`){
 									...dom_attr.children[i],
 								}
 								// domObject.attachDOM(children.tag,children.attr,children.html,children.attachType);
-								domObject.attachDOM(children);
+								domObject.append(jQuery.getDOMObject(children));
 							}
 						}
 					}
@@ -346,6 +228,7 @@ if(typeof jQuery===`function`){
 						let default_td={
 							tag:`td`,attr:undefined,html:undefined,children:[],attachType:`append`
 						}
+						let trDomObject;
 						let trList=dom_attr.tbody || dom_attr.tr;
 						for(let i=0; i<trList.length; i++){
 							let curTr=trList[i];
@@ -354,7 +237,7 @@ if(typeof jQuery===`function`){
 								...curTr
 							}
 							// let trDomObject=domObject.attachDOM(tr.tag,tr.attr,tr.html,tr.attachType);
-							let trDomObject=domObject.attachDOM(tr);
+							trDomObject=jQuery.getDOMObject(tr);
 							for(let j=0; j<curTr.td.length; j++){
 								let curTd=curTr.td[j];
 								if(typeof curTd==`string`){
@@ -365,10 +248,10 @@ if(typeof jQuery===`function`){
 									...curTd,
 								}
 								// trDomObject.attachDOM(td.tag,td.attr,td.html,td.attachType);
-								trDomObject.attachDOM(td);
+								trDomObject.append(jQuery.getDOMObject(td));
 							}
+							domObject.append(trDomObject);
 						}
-						
 					}
 				}catch(e){
 					console.error(e);
@@ -377,7 +260,7 @@ if(typeof jQuery===`function`){
 			return domObject;
 		}catch(e){
 			//对不规范写法的容错，如：只传dom_tag的情况下，直接返回字符串，而不是JQuery对象。
-			return getDOMString(dom_tag, dom_attr, dom_html);
+			return jQuery.getDOMString(dom_tag, dom_attr, dom_html);
 		}
 	}
 
@@ -395,32 +278,6 @@ if(typeof jQuery===`function`){
 				this.attachDOM(cur);
 			}
 			return;
-		}
-
-		//dom_tag为对象时，和普通情况一样
-		if(typeof dom_tag==`object` && dom_tag.length==undefined){
-			let dom_attr_fix_blacklist=[
-				`tag`,`attachType`,
-			]
-			let dom_attr_fix_replace={
-				tagName:`tag`, attrName:`attr`,
-			}
-			let dom_attr_fix={};
-			if(dom_tag.attr==undefined){
-				for(let key in dom_tag){
-					if(!dom_attr_fix_blacklist.includes(key)){
-						let key_fix=key;
-						for(let origin in dom_attr_fix_replace){
-							key_fix=key_fix.replace(origin,dom_attr_fix_replace[origin]);
-						}
-						dom_attr_fix[key_fix]=dom_tag[key];
-					}
-				}
-			}
-			dom_attr=dom_tag.attr || dom_attr_fix;
-			dom_html=dom_tag.html;
-			attach_type=dom_tag.attachType || attach_type;
-			dom_tag=dom_tag.tag;
 		}
 
 		let domObject=jQuery.getDOMObject(dom_tag, dom_attr, dom_html);
