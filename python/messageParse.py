@@ -3,8 +3,16 @@ import sys
 import json
 import time
 import base64
+from loguru import logger
 
 '''
+- 20231231
+	- 加入输出图片的计数。
+	- 加入处理进度百分比显示。
+	- 调整图片索引为txt文件。
+	- 优化导出图片数据时的内存占用。
+	- 优化HTML写入逻辑，提升HTML输出速度。
+	- 修复处理大量数据时报错的bug。
 - 20231227
 	- 加入输出用时。
 	- 加入脚本、样式强制指定编码功能，防止乱码。
@@ -22,6 +30,7 @@ import base64
 '''
 
 outputPath=''
+sys.set_int_max_str_digits(0)
 
 def cmd(c):
 	os.system(c)
@@ -79,12 +88,14 @@ def parseLine(line):
 	else:
 		return {'type':'data','text':line.strip()}
 
-htmlMonth='default'
+htmlMonth=''
 htmlMonthLast=''
 htmlScript='<script src="/scripts/jquery-3.0.0.min.js" charset="UTF-8"></script><script src="/scripts/jquery.extensions.dom.js" charset="UTF-8"></script><script src="/scripts/utils.js" charset="UTF-8"></script><script src="/scripts/message.js" charset="UTF-8"></script><link rel="stylesheet" href="/styles/message.css" charset="UTF-8">'
 htmlHead='<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="UTF-8"/><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>QQ Message</title><style type="text/css">body{font-size:12px; line-height:22px; margin:2px;}td{font-size:12px; line-height:22px;}</style></head><body><table width="100%" cellspacing="0">'
 htmlTail='</table></body></html>'
 alreadyWriteScript=False
+alreadyWriteCompleted=False
+htmlTotalDict={}
 # htmlDateList=[]
 def writeHtml(html):
 	global htmlScript
@@ -95,6 +106,18 @@ def writeHtml(html):
 	global htmlTail
 	global isFirstFile
 	global alreadyWriteScript
+	global alreadyWriteCompleted
+	global htmlTotalDict
+
+	if html==True and not alreadyWriteCompleted:
+		for dateSS in htmlTotalDict:
+			with open(f'{outputPath}/{dateSS}.html','a',encoding='utf-8') as f:
+				f.write('\n'.join(htmlTotalDict[dateSS]))
+				f.flush()
+		htmlTotalDict={}
+		alreadyWriteCompleted=True
+		return
+
 	replaceList=[
 		{'origin':'IMG ','target':'IMG loading="lazy" '},
 		{'origin':'src=','target':'data-src='},
@@ -113,19 +136,72 @@ def writeHtml(html):
 			htmlMonthLast=htmlMonth
 			alreadyWriteScript=False
 
-	with open(f'{outputPath}/{htmlMonth}.html','a',encoding='utf-8') as f:
-		if not alreadyWriteScript:
-			htmlArr=[htmlHead, htmlScript, htmlStr, '']
-			f.write('\n'.join(htmlArr))
-			# f.write(f'{htmlHead}\n')
-			# f.write(f'{htmlScript}\n')
-			# f.write(f'{htmlStr}\n')
-			# f.write(f'{htmlTail}\n')
-			alreadyWriteScript=True
-		else:
-			f.write(f'{htmlStr}\n')
-		f.flush()
-		f.close()
+	if not htmlMonth in htmlTotalDict.keys():
+		htmlTotalDict[htmlMonth]=[]
+	if not alreadyWriteScript:
+		htmlArr=[htmlHead, htmlScript, htmlStr, '']
+		htmlTotalDict[htmlMonth].extend(htmlArr)
+		alreadyWriteScript=True
+	else:
+		htmlTotalDict[htmlMonth].append(f'{htmlStr}\n')
+
+	return htmlMonth
+
+	# with open(f'{outputPath}/{htmlMonth}.html','a',encoding='utf-8') as f:
+	# 	if not alreadyWriteScript:
+	# 		htmlArr=[htmlHead, htmlScript, htmlStr, '']
+	# 		f.write('\n'.join(htmlArr))
+	# 		# f.write(f'{htmlHead}\n')
+	# 		# f.write(f'{htmlScript}\n')
+	# 		# f.write(f'{htmlStr}\n')
+	# 		# f.write(f'{htmlTail}\n')
+	# 		alreadyWriteScript=True
+	# 	else:
+	# 		f.write(f'{htmlStr}\n')
+	# 	f.flush()
+	
+	# if commit==True:
+	# 	if '日期: ' in htmlStr:
+	# 		htmlDate=htmlStr.split('日期: ')[1].split('</td>')[0].split('-')
+	# 		htmlMonth=f'{htmlDate[0]}-{htmlDate[1]}'
+	# 		htmlDateStr=f'{htmlDate[0]}-{htmlDate[1]}-{htmlDate[2]}'
+	# 		htmlStr=htmlStr.replace(htmlDateStr,f'<span id="dateStr_{htmlDateStr}" class="dateTag" date="{htmlDateStr}">{htmlDateStr}</span>')
+	# 		# htmlDateList.append(htmlDateStr)
+	# 		if htmlMonth != htmlMonthLast:
+	# 			if htmlMonthLast!='':
+	# 				htmlTotalArr.append(htmlTail)
+	# 				with open(f'{outputPath}/{htmlMonthLast}.html','a',encoding='utf-8') as f:
+	# 					f.write('\n'.join(htmlTotalArr))
+	# 					f.flush()
+	# 			htmlMonthLast=htmlMonth
+	# 			htmlTotalArr=[htmlHead, htmlScript, htmlStr]
+	# 		else:
+	# 			htmlTotalArr.append(htmlStr)
+	# 	else:
+	# 		htmlTotalArr.append(htmlStr)
+	# else:
+	# 	if '日期: ' in htmlStr:
+	# 		htmlDate=htmlStr.split('日期: ')[1].split('</td>')[0].split('-')
+	# 		htmlMonth=f'{htmlDate[0]}-{htmlDate[1]}'
+	# 		htmlDateStr=f'{htmlDate[0]}-{htmlDate[1]}-{htmlDate[2]}'
+	# 		htmlStr=htmlStr.replace(htmlDateStr,f'<span id="dateStr_{htmlDateStr}" class="dateTag" date="{htmlDateStr}">{htmlDateStr}</span>')
+	# 		# htmlDateList.append(htmlDateStr)
+	# 		if htmlMonth != htmlMonthLast:
+	# 			htmlMonthLast=htmlMonth
+	# 			alreadyWriteScript=False
+
+	# 	with open(f'{outputPath}/{htmlMonth}.html','a',encoding='utf-8') as f:
+	# 		if not alreadyWriteScript:
+	# 			htmlArr=[htmlHead, htmlScript, htmlStr, '']
+	# 			f.write('\n'.join(htmlArr))
+	# 			# f.write(f'{htmlHead}\n')
+	# 			# f.write(f'{htmlScript}\n')
+	# 			# f.write(f'{htmlStr}\n')
+	# 			# f.write(f'{htmlTail}\n')
+	# 			alreadyWriteScript=True
+	# 		else:
+	# 			f.write(f'{htmlStr}\n')
+	# 		f.flush()
 
 offsetIndex=0
 dataFileName=1
@@ -134,8 +210,10 @@ def writeData(data, commit=True):
 	global offsetIndex
 	global dataFileName
 	global offsetData
-	if data['location']=='' or data['data']=='':
+	
+	if data['location']=='' or len(data['data'])<=0:
 		return False
+	
 	fileName=data['location']
 	fileType=data['type']
 	fileEncoding=data['encoding']
@@ -149,8 +227,8 @@ def writeData(data, commit=True):
 		dataPath=f'{outputPath}/{dataFileName}.dat'
 		with open(dataPath,'ab') as f:
 			f.write(realData)
-			f.flush()
-			f.close()
+			# f.flush()
+			# f.close()
 
 		offsetData[fileName]={
 			'file':f'{dataFileName}.dat',
@@ -163,14 +241,19 @@ def writeData(data, commit=True):
 
 		if offsetIndex>=1073741824:
 		# if offsetIndex>=1048576:
+			outputOffset()
+			offsetData={}
 			dataFileName+=1
 			offsetIndex=0
+
+		return True
 	else:
 		dataPath=f'{outputPath}/{fileName}'
 		with open(dataPath,'wb') as f:
 			f.write(realData)
-			f.flush()
-			f.close()
+			# f.flush()
+			# f.close()
+		return True
 
 # def outputDateList():
 # 	global htmlDateList
@@ -182,21 +265,32 @@ def writeData(data, commit=True):
 
 def outputOffset():
 	global offsetData
-	offsetList=[]
-	for key in offsetData:
-		cur=offsetData[key]
-		offsetList.append(f'{cur["file"]}&{cur["name"]}&{cur["type"]}&{cur["offset"]}&{cur["size"]}')
-	a=json.dumps(offsetList)
-	with open(f'{outputPath}/imgdata.json','w',encoding='utf-8') as f:
-		f.write(a)
-		f.flush()
-		f.close()
+	with open(f'{outputPath}/imgdata.txt','a',encoding='utf-8') as f:
+		for key in offsetData:
+			cur=offsetData[key]
+			f.write(f'{cur["file"]}|{cur["name"]}|{cur["type"]}|{cur["offset"]}|{cur["size"]}\n')
+	
+	# global offsetData
+	# offsetList=[]
+	# for key in offsetData:
+	# 	cur=offsetData[key]
+	# 	offsetList.append(f'{cur["file"]}|{cur["name"]}|{cur["type"]}|{cur["offset"]}|{cur["size"]}')
+	# a=json.dumps(offsetList)
+	# with open(f'{outputPath}/imgdata.json','w',encoding='utf-8') as f:
+	# 	f.write(a)
+	# 	f.flush()
+	# 	f.close()
 
 def exist(dirs):
 	return os.path.exists(dirs)
 
+def calcLines(file, lenPerLine):
+	fileSize=os.path.getsize(file)
+	return int(fileSize / lenPerLine)
+
 def main(name):
 	global outputPath
+	global alreadyWriteCompleted
 	folderName=name.replace('.mht','')
 	with open(name,'r',encoding='utf-8') as f:
 		index=1
@@ -213,6 +307,8 @@ def main(name):
 		endTime=0
 		totalBeginTime=0
 		totalEndTime=0
+		totalImgNum=0
+		totalLines=calcLines(name,100) # base64部分每行100个字节，忽略HTML部分，只计算近似数量
 
 		isOutputData=input('是否输出图片资源？[Y/N] ')
 		if isOutputData=='y' or isOutputData=='Y':
@@ -232,13 +328,14 @@ def main(name):
 						outputOffset()
 					# outputDateList()
 					totalEndTime=time.time()
-					print(f'END. [{formatSeconds(totalEndTime - totalBeginTime)}]')
+					print(f'(100%)END. [{formatSeconds(totalEndTime - totalBeginTime)}]')
 					break
 				parse=parseLine(data)
 				if parse['type']=='html':
 					status='html'
-					writeHtml(parse)
-					print(index,'Write HTML')
+					wh=writeHtml(parse)
+					percent=(index / totalLines) * 100
+					print(f'({percent:.2f}%) {index} Write HTML {wh}')
 				elif parse['type']=='Content-Type':
 					status='Content-Type'
 					contentData['type']=parse['text']
@@ -246,6 +343,10 @@ def main(name):
 					status='Content-Transfer-Encoding'
 					contentData['encoding']=parse['text']
 				elif parse['type']=='Content-Location':
+					if not alreadyWriteCompleted:
+						writeHtml(True)
+						percent=(index / totalLines) * 100
+						print(f'{percent:.2f}%) {index} Write HTML End.')
 					if not isOutputData:
 						# outputDateList()
 						totalEndTime=time.time()
@@ -260,9 +361,12 @@ def main(name):
 					status='boundarySplit'
 					boundarySplit=parse['text']
 					if isOutputData:
-						writeData(contentData)
+						ws=writeData(contentData)
 						endTime=time.time()
-						print(f'\r{index} Write IMG Data [{formatSeconds(endTime - beginTime)}]')
+						if ws==True:
+							totalImgNum+=1
+							percent=(index / totalLines) * 100
+							print(f'\r({percent:.2f}%) {index} Write IMG Data {totalImgNum} [{formatSeconds(endTime - beginTime)}]')
 
 						beginTime=time.time()
 						contentData={
@@ -282,6 +386,7 @@ def main(name):
 				index+=1
 			except Exception as e:
 				print('ERROR.',e)
+				logger.exception('Exception')
 				break
 	pause()
 

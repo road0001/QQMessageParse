@@ -1,5 +1,6 @@
-let fs=require(`fs`);
-let path=require(`path`);
+const fs=require(`fs`);
+const path=require(`path`);
+const readline=require(`readline`);
 
 String.prototype.replaceAll=function(org,tgt){
 	return this.split(org).join(tgt);

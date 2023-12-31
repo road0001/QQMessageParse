@@ -1,45 +1,3 @@
-// let imgDataObj={};
-messagePath=``;
-imgDataMap=new Map();
-async function loadConfig(name){
-	return new Promise((resolve, reject)=>{
-		fs.readFile(name, `utf-8`, (err, data)=>{
-			if (err) {
-				reject(err);
-			}
-			// imgDataObj=JSON.parse(data);
-			let imgDataList=JSON.parse(data);
-			for(let cur of imgDataList){
-				let curSp=cur.split(`&`);
-				imgDataMap.set(curSp[1], {
-					file:curSp[0],
-					name:curSp[1],
-					type:curSp[2],
-					offset:parseInt(curSp[3]),
-					size:parseInt(curSp[4]),
-				});
-			}
-			// for(let key in imgDataObj){
-			// 	imgDataMap.set(key, imgDataObj[key]);
-			// }
-			resolve(imgDataMap);
-		});
-	});
-}
-
-// let dateDataArr=[];
-// async function loadDate(name){
-// 	return new Promise((resolve, reject)=>{
-// 		fs.readFile(name, `utf-8`, (err, data)=>{
-// 			if (err) {
-// 				reject(err);
-// 			}
-// 			dateDataArr=JSON.parse(data);
-// 			resolve(dateDataArr);
-// 		});
-// 	});
-// }
-
 class ReadImg{
 	constructor(name){
 		this._imgData=imgDataMap.get(name);
@@ -70,6 +28,68 @@ class ReadImg{
 		})
 	}
 }
+
+// let imgDataObj={};
+messagePath=``;
+imgDataMap=new Map();
+async function loadConfig(name){
+	return new Promise((resolve, reject)=>{
+		let file = fs.createReadStream(name);
+		let fileLine = readline.createInterface({input:file});
+		fileLine.on(`line`,(line) => {
+			if(line){
+				let curSp=line.split(`|`);
+				imgDataMap.set(curSp[1], {
+					file:curSp[0],
+					name:curSp[1],
+					type:curSp[2],
+					offset:parseInt(curSp[3]),
+					size:parseInt(curSp[4]),
+				});
+			}
+		});
+		fileLine.on(`close`,(line) => {
+			resolve(imgDataMap);
+		});
+		fileLine.on(`error`,(err) => {
+			reject(err);
+		});
+		// fs.readFile(name, `utf-8`, (err, data)=>{
+		// 	if (err) {
+		// 		reject(err);
+		// 	}
+		// 	// imgDataObj=JSON.parse(data);
+		// 	let imgDataList=JSON.parse(data);
+		// 	for(let cur of imgDataList){
+		// 		let curSp=cur.split(`&`);
+		// 		imgDataMap.set(curSp[1], {
+		// 			file:curSp[0],
+		// 			name:curSp[1],
+		// 			type:curSp[2],
+		// 			offset:parseInt(curSp[3]),
+		// 			size:parseInt(curSp[4]),
+		// 		});
+		// 	}
+		// 	// for(let key in imgDataObj){
+		// 	// 	imgDataMap.set(key, imgDataObj[key]);
+		// 	// }
+		// 	resolve(imgDataMap);
+		// });
+	});
+}
+
+// let dateDataArr=[];
+// async function loadDate(name){
+// 	return new Promise((resolve, reject)=>{
+// 		fs.readFile(name, `utf-8`, (err, data)=>{
+// 			if (err) {
+// 				reject(err);
+// 			}
+// 			dateDataArr=JSON.parse(data);
+// 			resolve(dateDataArr);
+// 		});
+// 	});
+// }
 
 function getTag(tag) {
     return Array.from(document.getElementsByTagName(tag));
@@ -209,35 +229,7 @@ async function main(){
 		dateObserver.observe(item);
 	});
 	setTimeout(()=>{setLoadCompleted()},500);
-	await loadConfig(`${messagePath}/imgdata.json`);
-	//图片列表（懒加载）
-	// let imgObserver = new IntersectionObserver(
-	// 	(changes) => {
-	// 		changes.forEach(async (change) => {
-	// 			if (change.intersectionRatio > 0) {
-	// 				let img = change.target;
-	// 				let imgData=new ReadImg(img.dataset.src);
-	// 				img.src = await imgData.read();
-	// 				imgObserver.unobserve(img);
-
-	// 				// img.addEventListener(`contextmenu`,(e)=>{
-	// 				// 	e.preventDefault();
-	// 				// 	let imageData=imgData.getData();
-	// 				// 	console.log(imageData);
-	// 				// 	let imageName=imageData.name.replaceAll(`.dat`,``);
-	// 				// 	let imageType=imageData.type.split(`/`)[1];
-	// 				// 	let image = document.createElement('a');
-	// 				// 	image.href = img.src;
-	// 				// 	image.download = `${imageName}.${imageType}`;
-	// 				// 	image.click();
-	// 				// })
-	// 			}
-	// 		})
-	// 	}
-	// )
-	// getTag('img').forEach((item) => {
-	// 	imgObserver.observe(item);
-	// });
+	await loadConfig(`${messagePath}/imgdata.txt`);
 
 	$(`img`).bind(`click`,function(){
 		global.showImg(true,$(this).attr(`src`),$(this).attr(`data-src`));
@@ -253,14 +245,46 @@ async function main(){
 		image.download = `${imageName}.${imageType}`;
 		image.click();
 	});
+	if($(`img`).length>100){
+		//图片列表（懒加载）
+		let imgObserver = new IntersectionObserver(
+			(changes) => {
+				changes.forEach(async (change) => {
+					if (change.intersectionRatio > 0) {
+						let img = change.target;
+						let imgData=new ReadImg(img.dataset.src);
+						img.src = await imgData.read();
+						imgObserver.unobserve(img);
 
-	//图片列表（非懒加载）
-	let imgEl=$(`img`);
-	for(let i=0; i<imgEl.length; i++){
-		let curImgEl=imgEl.eq(i);
-		let imgData=new ReadImg(curImgEl.attr(`data-src`));
-		let imgSrc=await imgData.read();
-		curImgEl.attr(`src`,imgSrc);
+						// img.addEventListener(`contextmenu`,(e)=>{
+						// 	e.preventDefault();
+						// 	let imageData=imgData.getData();
+						// 	console.log(imageData);
+						// 	let imageName=imageData.name.replaceAll(`.dat`,``);
+						// 	let imageType=imageData.type.split(`/`)[1];
+						// 	let image = document.createElement('a');
+						// 	image.href = img.src;
+						// 	image.download = `${imageName}.${imageType}`;
+						// 	image.click();
+						// })
+					}
+				})
+			}
+		)
+		getTag('img').forEach((item) => {
+			imgObserver.observe(item);
+		});
+	}else{
+		//图片列表（非懒加载）
+		let imgSrcList=[];
+		for(let i=0; i<$(`img`).length; i++){
+			let imgData=new ReadImg($(`img`).eq(i).attr(`data-src`));
+			let curImgSrc=await imgData.read();
+			imgSrcList.push(curImgSrc);
+		}
+		for(let i=0; i<$(`img`).length; i++){
+			$(`img`).eq(i).attr(`src`,imgSrcList[i]);
+		}
 	}
 }
 
